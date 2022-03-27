@@ -2,6 +2,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:todoey/models/task.dart';
 import 'package:todoey/utils/random_string.dart';
+import 'package:todoey/utils/sharedpref_helper.dart';
 
 part 'task_list_controller.freezed.dart';
 
@@ -22,12 +23,18 @@ class TaskListController extends StateNotifier<TaskListState> {
     _init();
   }
 
-  Future<void> _init() async {}
+  final _sharedPreferenceHelper = SharedPreferenceHelper();
+
+  Future<void> _init() async {
+    final _tasks = await _sharedPreferenceHelper.getTasks();
+    state = state.copyWith(tasks: _tasks);
+  }
 
   void addTask(String title) {
     final id = generateNonce();
     final newTask = Task(id: id, title: title);
     final _tasks = [...state.tasks, newTask];
+    _sharedPreferenceHelper.setTasks(_tasks);
     state = state.copyWith(tasks: _tasks);
   }
 
@@ -36,6 +43,7 @@ class TaskListController extends StateNotifier<TaskListState> {
     final index = _tasks.indexOf(task);
     final toggledTask = task.copyWith(isDone: !task.isDone);
     _tasks.replaceRange(index, index + 1, [toggledTask]);
+    _sharedPreferenceHelper.setTasks(_tasks);
     state = state.copyWith(tasks: _tasks);
   }
 
@@ -43,6 +51,7 @@ class TaskListController extends StateNotifier<TaskListState> {
     final _tasks = [...state.tasks];
     final index = _tasks.indexOf(task);
     _tasks.removeAt(index);
+    _sharedPreferenceHelper.setTasks(_tasks);
     state = state.copyWith(tasks: _tasks);
   }
 }
